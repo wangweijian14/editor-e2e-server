@@ -2,6 +2,6 @@ package model
 
 type ValidatorResult struct {
 	IsPass  bool
-	Error   string
-	Message string
+	Error   string `json:"error"`
+	Message string `json:"message"`
 }

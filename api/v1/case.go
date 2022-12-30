@@ -12,11 +12,27 @@ type CasesExecuteReq struct {
 	MustPage string `json:"must_page" dc:"baseUrl 初始打开的链接"`
 }
 
+type CasesExecuteResBck struct {
+	MustPageSnapshot   string            `json:"must_page_snapshot"`
+	ErrPageSnapshot    string            `json:"err_page_snapshot"`
+	FinishPageSnapShot string            `json:"finish_page_snap_shot"`
+	StepMsg            []*StepExecuteRes `json:"step_msg"`
+}
+
 type CasesExecuteRes struct {
-	MustPageSnapshot   string                  `json:"must_page_snapshot"`
-	ErrPageSnapshot    string                  `json:"err_page_snapshot"`
-	FinishPageSnapShot string                  `json:"finish_page_snap_shot"`
-	StepMsg            []*model.ActionReturned `json:"step_msg"`
+	IsSuccess       bool           `json:"is_success" dc:"执行结果,true === pass"`
+	ErrPageSnapshot string         `json:"err_page_snapshot"`
+	StepResults     []*StepResults `json:"step_results"`
+}
+
+type StepResults struct {
+	IsSuccess           bool        `json:"isSuccess" dc:"步骤执行成功 ture===成功"`
+	Error               error       `json:"error" dc:"执行异常信息"`
+	StepId              int         `json:"步骤ID"`
+	CaseStepDescription string      `json:"caseStepDescription"`
+	ElementName         string      `json:"elementName"`
+	ElementPath         string      `json:"elementPath"`
+	AssertRes           interface{} `json:"assertRes"`
 }
 
 type StepExecuteRes struct {

@@ -16,7 +16,7 @@ import (
 )
 
 func (c *cCases) Execute(ctx context.Context, req *v1.CasesExecuteReq) (res *v1.CasesExecuteRes, err error) {
-	res = &v1.CasesExecuteRes{}
+	res = &v1.CasesExecuteRes{IsSuccess: true}
 	cases, err := service.Cases().GetById(ctx, gconv.Uint64(req.Id))
 	if err != nil {
 		return nil, err
@@ -32,22 +32,63 @@ func (c *cCases) Execute(ctx context.Context, req *v1.CasesExecuteReq) (res *v1.
 	if page2Open != nil {
 		service.Action().MustPage(page2Open.Page.Url)
 	}
-	service.Action().MustScreenshot("resource/public/resource/image/login-page.jpg")
-	res.MustPageSnapshot = "https://localhots:8000/image/login-page.jpg"
 	// defer service.Action().ClosePage()
 
 	for _, caseStep := range cases.CaseStepOutput {
 		resI, err := parseStep(ctx, gconv.Uint64(caseStep.CaseStep.StepId), caseStep.CaseStep.Input)
+		v1StepRes := &v1.StepResults{
+			IsSuccess:           true,
+			StepId:              caseStep.Step.Step.Id,
+			CaseStepDescription: caseStep.Step.Step.Description,
+			ElementName:         caseStep.Step.Element.Element.Name,
+			ElementPath:         caseStep.Step.Element.Element.Path,
+		}
 		if err != nil {
-			service.Action().MustScreenshot("resource/public/resource/image/error-page.jpg")
+			// service.Action().MustScreenshot("resource/public/resource/image/error-page.jpg")
 			res.ErrPageSnapshot = "https://localhots:8000/image/error-page.jpg"
+			res.IsSuccess = false
+			v1StepRes.Error = err
+			res.StepResults = append(res.StepResults, v1StepRes)
 			return res, err
 		}
+
+		//处理断言
+		assertRes := make(map[string]interface{})
+		if caseStep.CaseStep.AssertExpect != "" {
+			canzhao := strings.Split(caseStep.CaseStep.AssertExpect, "<->")
+			if len(canzhao) > 0 {
+				for _, kk := range canzhao {
+					canzhaoInner := strings.Split(kk, ":")
+					if len(canzhaoInner) == 3 {
+						description := ""
+						if resI.Target != nil {
+							description = resI.Target.Object.Description
+						}
+
+						vfunc := service.ValidatorI().GetValidator(canzhaoInner[1])
+						var r *model.ValidatorResult
+						switch strings.ToLower(canzhaoInner[0]) {
+						case "text":
+							r = vfunc(resI.Returned, canzhaoInner[2])
+
+							assertRes[canzhaoInner[0]] = r
+						case "target":
+							r = vfunc(description, canzhaoInner[2])
+							assertRes[canzhaoInner[0]] = r
+						}
+						if r.IsPass == false {
+							v1StepRes.IsSuccess = false
+							res.IsSuccess = false
+						}
+					}
+				}
+			}
+		}
+
 		g.Log().Infof(ctx, "resI: %v", resI)
-		res.StepMsg = append(res.StepMsg, resI)
+		v1StepRes.AssertRes = assertRes
+		res.StepResults = append(res.StepResults, v1StepRes)
 	}
-	service.Action().MustScreenshot("resource/public/resource/image/done-page.jpg")
-	res.FinishPageSnapShot = "https://localhots:8000/image/done-page.jpg"
 	return res, nil
 }
 
@@ -109,6 +150,7 @@ func parseStep(ctx context.Context, stepId uint64, inputText string) (res *model
 		return nil, err
 	}
 	res = &model.ActionReturned{}
+	res.StepOutput = step
 	fmt.Printf("执行step %v : action-%v ,元素 : %v...\n", step.Step.Description,
 		step.Step.ActionId, step.Element.Element.Description)
 	switch step.Step.ActionId {

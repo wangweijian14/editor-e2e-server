@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"strings"
 	"time"
 	"wiki/internal/model"
 	"wiki/internal/service"
@@ -127,7 +128,26 @@ func (s *sAction) ClosePage() {
 func paresRetElement(ctx context.Context, page *rod.Page, target *model.ElementOutput) *rod.Element {
 	g.Log("action").Infof(ctx, "page: %v desc: %v path: %v", target.Page.Name, target.Element.Description, target.Element.Path)
 	if target.FatherElement != nil {
-		return page.MustElement(target.FatherElement.Path).MustElement(target.Element.Path)
+		fatherSplit := strings.Split(target.FatherElement.Path, ",")
+		elSplite := strings.Split(target.Element.Path, ",")
+
+		var f *rod.Element
+		if len(fatherSplit) > 1 {
+			f = page.MustElementR(fatherSplit[0], fatherSplit[1])
+		} else {
+			f = page.MustElement(target.FatherElement.Path)
+		}
+
+		if len(elSplite) > 1 {
+			return f.MustElementR(elSplite[0], elSplite[1])
+		}
+
+		return f.MustElement(target.Element.Path)
+	}
+
+	split := strings.Split(target.Element.Path, ",")
+	if len(split) > 1 {
+		return page.MustElementR(split[0], split[1])
 	}
 	return page.MustElement(target.Element.Path)
 }
