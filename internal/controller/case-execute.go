@@ -26,6 +26,8 @@ func (c *cCases) Execute(ctx context.Context, req *v1.CasesExecuteReq) (res *v1.
 	if err != nil {
 		return nil, err
 	}
+	// 用例执行完，不管失败与成功均关闭页面
+	// defer service.Action().ClosePage()
 
 	// 进入MustPage
 	g.Log().Info(ctx, page2Open, "aaa")

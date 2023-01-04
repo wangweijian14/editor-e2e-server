@@ -18,3 +18,11 @@ database:
     link:   "sqlite:./wiki.db"
     debug:  true
 
+# BrowserServer
+browser:
+  localBrowser: false  #若true不应用下面内容
+  #launcherManager:  "ws://124.223.27.10:7317"
+  launcherManager:  "ws://127.0.0.1:7317"
+  disable-gpu:  true
+  launchHeadfulMode:  false
+  serveMonitor: ""  #默认:localhost

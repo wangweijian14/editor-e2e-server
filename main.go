@@ -10,7 +10,6 @@ import (
 	"github.com/gogf/gf/v2/os/gctx"
 
 	"wiki/internal/cmd"
-
 )
 
 func main() {

@@ -32,6 +32,7 @@ type (
 		MustFindTargetAndMustHover(ctx context.Context, target *model.ElementOutput) *rod.Element
 		MustScreenshot(name string)
 		ClosePage()
+		GetServeMonitorPath() string
 	}
 )
 

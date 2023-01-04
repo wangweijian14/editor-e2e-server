@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
 	"github.com/gogf/gf/v2/os/gcmd"
-	"net/http"
 
 	"wiki/internal/controller"
 )
@@ -28,6 +29,7 @@ var (
 					controller.Step,
 					controller.Cases,
 					controller.CaseStep,
+					controller.CLaucher,
 				)
 			})
 			s.Run()
@@ -45,7 +47,7 @@ func MiddlewareErrorHandler(r *ghttp.Request) {
 	r.Middleware.Next()
 	if r.Response.Status >= http.StatusInternalServerError {
 		r.Response.ClearBuffer()
-		r.Response.WriteJson(ghttp.DefaultHandlerResponse{Code: r.Response.Status,Message: r.GetError().Error()})
+		r.Response.WriteJson(ghttp.DefaultHandlerResponse{Code: r.Response.Status, Message: r.GetError().Error()})
 	}
 }
 
@@ -54,5 +56,5 @@ type WikiTestHandlerResponse struct {
 	Code    int         `json:"code"    dc:"Error code"`
 	Message string      `json:"message" dc:"Error message"`
 	Data    interface{} `json:"data"    dc:"Result data for certain request according API definition"`
-	Count	int	`json:"count" dc:"total"`
+	Count   int         `json:"count" dc:"total"`
 }

@@ -9,20 +9,78 @@ import (
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/input"
+	"github.com/go-rod/rod/lib/launcher"
 	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/os/gcfg"
+	"github.com/gogf/gf/v2/os/gctx"
+	"github.com/gogf/gf/v2/util/gconv"
 )
 
 type sAction struct {
-	Browser *rod.Browser
-	Page    *rod.Page
+	Browser      *rod.Browser
+	Page         *rod.Page
+	Managed      string
+	ServeMonitor string
 }
 
 func init() {
 	service.RegisterAction(New())
 }
 func New() *sAction {
+
+	// 分布式浏览器支持
+	// This example is to launch a browser remotely, not connect to a running browser remotely,
+	// to connect to a running browser check the "../connect-browser" example.
+	// Rod provides a docker image for beginners, run the below to start a launcher.Manager:
+	//
+	//     docker run -p 7317:7317 ghcr.io/go-rod/rod
+	//
+	// For available CLI flags run: docker run ghcr.io/go-rod/rod rod-manager -h
+	// For more information, check the doc of launcher.Manager
+	var ctx = gctx.New()
+	cf, err := gcfg.Instance().Get(ctx, "browser")
+	if err != nil {
+		panic("读取browser 配置失败...")
+	}
+	browserCf := &model.BrowserConfig{}
+
+	err = gconv.Struct(cf, browserCf)
+	if err != nil {
+		panic("读取browser 配置失败...")
+	}
+
+	if browserCf.LocalBrowser {
+
+		// 本地浏览器connect，计划使用Linux，若本地，使用此方式
+		// TODO： 实现可配置
+		browser := rod.New().MustConnect()
+		return &sAction{
+			Browser: browser,
+		}
+	}
+
+	l := launcher.MustNewManaged(browserCf.LauncherManager)
+
+	// You can also set any flag remotely before you launch the remote browser.
+	// Available flags: https://peter.sh/experiments/chromium-command-line-switches
+	l.Set("disable-gpu").Delete("disable-gpu")
+
+	// Launch with headful mode
+	if !browserCf.LaunchHeadfulMode {
+		l.Headless(false).XVFB("--server-num=5", "--server-args=-screen 0 1600x900x16")
+	}
+
+	browser := rod.New().Client(l.MustClient()).MustConnect()
+
+	// You may want to start a server to watch the screenshots of the remote browser.
+	serveMonitor := browser.ServeMonitor(browserCf.ServeMonitor) //TODO 可配置
+	g.Log().Info(ctx, "serveMonitor : ", serveMonitor)
+	launcher.Open(serveMonitor)
+
 	return &sAction{
-		Browser: rod.New().MustConnect(),
+		Browser:      browser,
+		Managed:      "",
+		ServeMonitor: serveMonitor,
 	}
 }
 
@@ -123,6 +181,10 @@ func (s *sAction) MustScreenshot(name string) {
 
 func (s *sAction) ClosePage() {
 	s.Page.MustClose()
+}
+
+func (s *sAction) GetServeMonitorPath() string {
+	return s.ServeMonitor
 }
 
 func paresRetElement(ctx context.Context, page *rod.Page, target *model.ElementOutput) *rod.Element {
