@@ -23,16 +23,29 @@ type CasesExecuteRes struct {
 	IsSuccess       bool           `json:"is_success" dc:"执行结果,true === pass"`
 	ErrPageSnapshot string         `json:"err_page_snapshot"`
 	StepResults     []*StepResults `json:"step_results"`
+	Duration        int64          `json:"duration"`
+	StartTime       string         `json:"startTime"`
+	HisId           string         `json:"hisId"`
+	CaseDescription string         `json:"caseDescription"`
+	Error           string         `json:"error"`
 }
 
 type StepResults struct {
-	IsSuccess           bool        `json:"isSuccess" dc:"步骤执行成功 ture===成功"`
-	Error               error       `json:"error" dc:"执行异常信息"`
-	StepId              int         `json:"步骤ID"`
-	CaseStepDescription string      `json:"caseStepDescription"`
-	ElementName         string      `json:"elementName"`
-	ElementPath         string      `json:"elementPath"`
-	AssertRes           interface{} `json:"assertRes"`
+	IsSuccess           bool         `json:"isSuccess" dc:"步骤执行成功 ture===成功"`
+	Error               error        `json:"error" dc:"执行异常信息"`
+	StepId              int          `json:"stepId" dc:"步骤ID"`
+	CaseStepDescription string       `json:"caseStepDescription"`
+	ElementName         string       `json:"elementName"`
+	ElementPath         string       `json:"elementPath"`
+	UnixMilli           int64        `json:unixMilli`
+	AssertRes           []*AssertRes `json:"assertRes"`
+}
+
+type AssertRes struct {
+	Method    string `json:"method" dc:"断言方法"`
+	IsSuccess bool   `json:"isSuccess" dc:"断言是否通过"`
+	Error     string `json:"error"`
+	Message   string `json:"message" dc: "断言详情"`
 }
 
 type StepExecuteRes struct {

@@ -30,6 +30,7 @@ var (
 					controller.Cases,
 					controller.CaseStep,
 					controller.CLaucher,
+					controller.CaseReport,
 				)
 			})
 			s.Run()

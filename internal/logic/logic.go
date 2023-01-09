@@ -10,6 +10,7 @@ import (
 	_ "wiki/internal/logic/cases"
 	_ "wiki/internal/logic/element"
 	_ "wiki/internal/logic/page"
+	_ "wiki/internal/logic/report"
 	_ "wiki/internal/logic/step"
 	_ "wiki/internal/logic/validator"
 )
