@@ -10,6 +10,7 @@ import (
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/input"
 	"github.com/go-rod/rod/lib/launcher"
+	"github.com/go-rod/rod/lib/proto"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gcfg"
 	"github.com/gogf/gf/v2/os/gctx"
@@ -71,11 +72,13 @@ func New() *sAction {
 	}
 
 	browser := rod.New().Client(l.MustClient()).MustConnect()
-
-	// You may want to start a server to watch the screenshots of the remote browser.
-	serveMonitor := browser.ServeMonitor(browserCf.ServeMonitor) //TODO 可配置
-	g.Log().Info(ctx, "serveMonitor : ", serveMonitor)
-	launcher.Open(serveMonitor)
+	serveMonitor := ""
+	if browserCf.StartMonitorServer {
+		// You may want to start a server to watch the screenshots of the remote browser.
+		serveMonitor = browser.ServeMonitor(browserCf.ServeMonitor) //TODO 可配置
+	}
+	g.Log().Info(ctx, "serveMonitor : ", serveMonitor, "startMonitor :", browserCf.StartMonitorServer)
+	// launcher.Open(serveMonitor)
 
 	return &sAction{
 		Browser:      browser,
@@ -183,8 +186,42 @@ func (s *sAction) ClosePage() {
 	s.Page.MustClose()
 }
 
+// 获取监测服务地址
 func (s *sAction) GetServeMonitorPath() string {
 	return s.ServeMonitor
+}
+
+// 获取监测页面列表
+func (s *sAction) GetMonitorPages() ([]*proto.TargetTargetInfo, error) {
+	res, err := proto.TargetGetTargets{}.Call(s.Browser)
+	if err != nil {
+		return nil, err
+	}
+
+	list := []*proto.TargetTargetInfo{}
+	for _, info := range res.TargetInfos {
+		if info.Type == proto.TargetTargetInfoTypePage {
+			list = append(list, info)
+		}
+	}
+	return list, nil
+}
+
+// 获取监测页面详情
+func (s *sAction) GetMonitorPageInfo(id string) (*proto.TargetTargetInfo, error) {
+
+	res, err := proto.TargetGetTargetInfo{TargetID: proto.TargetTargetID(id)}.Call(s.Browser)
+	if err != nil {
+		return nil, err
+	}
+	return res.TargetInfo, nil
+}
+
+// 获取目标页面screenshot pic
+func (s *sAction) GetMonitorPageScreenshot(id string) []byte {
+	target := proto.TargetTargetID(id)
+	p := s.Browser.MustPageFromTargetID(target)
+	return p.MustScreenshot()
 }
 
 func paresRetElement(ctx context.Context, page *rod.Page, target *model.ElementOutput) *rod.Element {

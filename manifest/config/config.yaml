@@ -26,3 +26,4 @@ browser:
   disable-gpu:  true
   launchHeadfulMode:  false
   serveMonitor: ""  #默认:localhost
+  startMonitorServer: false

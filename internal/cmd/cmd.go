@@ -29,7 +29,7 @@ var (
 					controller.Step,
 					controller.Cases,
 					controller.CaseStep,
-					controller.CLaucher,
+					controller.CMonitor,
 					controller.CaseReport,
 				)
 			})

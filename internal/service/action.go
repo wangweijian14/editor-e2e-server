@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/input"
+	"github.com/go-rod/rod/lib/proto"
 )
 
 type (
@@ -33,6 +34,9 @@ type (
 		MustScreenshot(name string)
 		ClosePage()
 		GetServeMonitorPath() string
+		GetMonitorPages() ([]*proto.TargetTargetInfo, error)
+		GetMonitorPageInfo(id string) (*proto.TargetTargetInfo, error)
+		GetMonitorPageScreenshot(id string) []byte
 	}
 )
 
