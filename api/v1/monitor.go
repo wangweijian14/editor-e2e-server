@@ -18,7 +18,7 @@ type MonitorPagesReq struct {
 }
 
 type MonitorPagesRes struct {
-	Pages []*proto.TargetTargetInfo
+	Pages []*proto.TargetTargetInfo `json:"pages"`
 }
 
 type MonitorPageOneReq struct {
