@@ -49,29 +49,28 @@ func New() *sAction {
 	if err != nil {
 		panic("读取browser 配置失败...")
 	}
-
+	var browser *rod.Browser
+	g.Log().Info(ctx, "browserCf.LocalBrowser:", browserCf.LocalBrowser)
 	if browserCf.LocalBrowser {
 
 		// 本地浏览器connect，计划使用Linux，若本地，使用此方式
 		// TODO： 实现可配置
-		browser := rod.New().MustConnect()
-		return &sAction{
-			Browser: browser,
+		browser = rod.New().MustConnect()
+	} else {
+		l := launcher.MustNewManaged(browserCf.LauncherManager)
+
+		// You can also set any flag remotely before you launch the remote browser.
+		// Available flags: https://peter.sh/experiments/chromium-command-line-switches
+		l.Set("disable-gpu").Delete("disable-gpu")
+
+		// Launch with headful mode
+		if !browserCf.LaunchHeadfulMode {
+			l.Headless(false).XVFB("--server-num=5", "--server-args=-screen 0 1600x900x16")
 		}
+
+		browser = rod.New().Client(l.MustClient()).MustConnect()
 	}
 
-	l := launcher.MustNewManaged(browserCf.LauncherManager)
-
-	// You can also set any flag remotely before you launch the remote browser.
-	// Available flags: https://peter.sh/experiments/chromium-command-line-switches
-	l.Set("disable-gpu").Delete("disable-gpu")
-
-	// Launch with headful mode
-	if !browserCf.LaunchHeadfulMode {
-		l.Headless(false).XVFB("--server-num=5", "--server-args=-screen 0 1600x900x16")
-	}
-
-	browser := rod.New().Client(l.MustClient()).MustConnect()
 	serveMonitor := ""
 	if browserCf.StartMonitorServer {
 		// You may want to start a server to watch the screenshots of the remote browser.
